@@ -2,7 +2,7 @@
 // Conversation Domain — Constants
 // ============================================================
 
-export const CONVERSATION_DOMAIN = 'conversation' as const;
+export const CONVERSATIONS_DOMAIN = 'conversations' as const;
 
 /** Valid conversation status transitions */
 export const VALID_CONVERSATION_TRANSITIONS: Record<string, string[]> = {

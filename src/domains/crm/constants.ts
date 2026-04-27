@@ -2,4 +2,4 @@
 // Customer Domain — Constants
 // ============================================================
 
-export const CUSTOMER_DOMAIN = 'customer' as const;
+export const CRM_DOMAIN = 'crm' as const;

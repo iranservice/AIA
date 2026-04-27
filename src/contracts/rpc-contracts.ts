@@ -4,12 +4,12 @@
 // ============================================================
 
 import type { UUID } from '../lib/types';
-import type { ChannelType, MembershipRole } from '../domains/rbac/types';
-import type { MessageDirection, MessageSenderType, MessageContentType } from '../domains/conversation/types';
-import type { OrderStatus, OrderType } from '../domains/order/types';
-import type { ReservationStatus } from '../domains/reservation/types';
-import type { TicketPriority } from '../domains/tickets/types';
-import type { ActionType, ActionTriggerSource } from '../domains/action-engine/types';
+import type { ChannelType, MembershipRole } from '../domains/authz/types';
+import type { MessageDirection, MessageSenderType, MessageContentType } from '../domains/conversations/types';
+import type { OrderStatus, OrderType } from '../domains/orders/types';
+import type { ReservationStatus } from '../domains/reservations/types';
+import type { TicketPriority } from '../domains/cases/types';
+import type { ActionType, ActionTriggerSource } from '../domains/actions/types';
 import type { AuditSeverity } from '../domains/audit/types';
 import type { UsageMeterType } from '../domains/billing/types';
 import type { JsonObject } from '../lib/types';
@@ -31,7 +31,7 @@ export interface GetUserMembershipResult {
   is_active: boolean;
 }
 
-// ── RBAC RPCs ───────────────────────────────────────────────
+// ── Authz RPCs ──────────────────────────────────────────────
 
 export interface CheckPermissionParams {
   p_user_id: UUID;
@@ -50,7 +50,7 @@ export interface EvaluatePolicyParams {
   p_context?: JsonObject;
 }
 
-// ── Customer RPCs ───────────────────────────────────────────
+// ── CRM RPCs ────────────────────────────────────────────────
 
 export interface ResolveOrCreateCustomerParams {
   p_business_id: UUID;
@@ -59,7 +59,7 @@ export interface ResolveOrCreateCustomerParams {
   p_name?: string;
 }
 
-// ── Conversation RPCs ───────────────────────────────────────
+// ── Conversations RPCs ──────────────────────────────────────
 
 export interface CreateConversationParams {
   p_business_id: UUID;
@@ -81,6 +81,8 @@ export interface SendMessageParams {
   p_reply_to_id?: UUID;
 }
 
+// ── Routing RPCs ────────────────────────────────────────────
+
 export interface AssignConversationParams {
   p_conversation_id: UUID;
   p_operator_id: UUID;
@@ -101,7 +103,14 @@ export interface TakeoverConversationParams {
   p_operator_id: UUID;
 }
 
-// ── Order RPCs ──────────────────────────────────────────────
+export interface TransferConversationParams {
+  p_conversation_id: UUID;
+  p_from_operator_id: UUID;
+  p_to_operator_id: UUID;
+  p_reason?: string;
+}
+
+// ── Orders RPCs ─────────────────────────────────────────────
 
 export interface CreateOrderParams {
   p_business_id: UUID;
@@ -126,7 +135,7 @@ export interface ConfirmOrderByCustomerParams {
   p_customer_id: UUID;
 }
 
-// ── Reservation RPCs ────────────────────────────────────────
+// ── Reservations RPCs ───────────────────────────────────────
 
 export interface CreateReservationParams {
   p_business_id: UUID;
@@ -147,9 +156,9 @@ export interface TransitionReservationStatusParams {
   p_reason?: string;
 }
 
-// ── Ticket RPCs ─────────────────────────────────────────────
+// ── Cases RPCs ──────────────────────────────────────────────
 
-export interface CreateTicketParams {
+export interface CreateCaseParams {
   p_business_id: UUID;
   p_customer_id: UUID;
   p_subject: string;
@@ -161,7 +170,7 @@ export interface CreateTicketParams {
   p_callback_scheduled_at?: string;
 }
 
-// ── Action Engine RPCs ──────────────────────────────────────
+// ── Actions RPCs ────────────────────────────────────────────
 
 export interface RequestActionParams {
   p_action_type: ActionType;
@@ -172,14 +181,29 @@ export interface RequestActionParams {
   p_conversation_id?: UUID;
 }
 
-export interface ApproveActionParams {
-  p_execution_id: UUID;
-  p_approver_id: UUID;
+// ── Approvals RPCs ──────────────────────────────────────────
+
+export interface CreateApprovalRequestParams {
+  p_business_id: UUID;
+  p_source: string;
+  p_source_entity_type: string;
+  p_source_entity_id: UUID;
+  p_title: string;
+  p_description?: string;
+  p_requested_by?: UUID;
+  p_required_roles: string[];
+  p_approval_data?: JsonObject;
+  p_expires_at?: string;
+}
+
+export interface DecideApprovalParams {
+  p_approval_request_id: UUID;
+  p_decided_by: UUID;
   p_approved: boolean;
   p_reason?: string;
 }
 
-// ── Provider RPCs ───────────────────────────────────────────
+// ── Channels / Provider RPCs ────────────────────────────────
 
 export interface GetProviderConfigParams {
   p_provider_id: UUID;

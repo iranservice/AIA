@@ -1,8 +1,8 @@
 // ============================================================
-// RBAC Domain — Constants
+// Authz Domain — Constants
 // ============================================================
 
-export const RBAC_DOMAIN = 'rbac' as const;
+export const AUTHZ_DOMAIN = 'authz' as const;
 
 /** All permission codes in the system */
 export const PERMISSION_CODES = {

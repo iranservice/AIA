@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { UUID, Timestamp, JsonObject } from '../../lib/types';
-import type { ActionType } from '../action-engine/types';
+import type { ActionType } from '../actions/types';
 
 export const AI_RUNTIME_DOMAIN = 'ai-runtime' as const;
 

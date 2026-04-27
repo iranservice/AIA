@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { UUID, Timestamp, JsonObject } from '../../lib/types';
-import type { ChannelType } from '../rbac/types';
+import type { ChannelType } from '../authz/types';
 
 /** End-customer of a tenant business */
 export interface Customer {

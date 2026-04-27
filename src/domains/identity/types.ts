@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { UUID, Timestamp } from '../../lib/types';
-import type { PlatformRole } from '../rbac/types';
+import type { PlatformRole } from '../authz/types';
 
 /** User profile extending Supabase auth.users */
 export interface UserProfile {

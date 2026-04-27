@@ -1,9 +1,16 @@
 // ============================================================
-// Conversation Domain — Types
+// Conversations Domain — Types
+//
+// Owns: conversations, messages, attachments, threads,
+// message processing windows, inbox-ready query data,
+// conversation notes, and tags.
+//
+// Boundary: Conversations owns MESSAGE content.
+//           Routing owns WHO controls the conversation.
 // ============================================================
 
 import type { UUID, Timestamp, JsonObject } from '../../lib/types';
-import type { ChannelType } from '../rbac/types';
+import type { ChannelType } from '../authz/types';
 
 // ── Enums ───────────────────────────────────────────────────
 

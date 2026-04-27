@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { UUID, Timestamp, JsonObject } from '../../lib/types';
-import type { MembershipRole, ChannelType } from '../rbac/types';
+import type { MembershipRole, ChannelType } from '../authz/types';
 
 // ── Business Types ──────────────────────────────────────────
 

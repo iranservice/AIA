@@ -3,9 +3,9 @@
 // ============================================================
 
 import type { UUID, Timestamp, JsonObject } from '../../lib/types';
-import type { MembershipRole } from '../rbac/types';
+import type { MembershipRole } from '../authz/types';
 
-export const ACTION_ENGINE_DOMAIN = 'action-engine' as const;
+export const ACTIONS_DOMAIN = 'actions' as const;
 
 export const ACTION_TYPES = [
   'send_message', 'create_order', 'update_order',
