@@ -2,7 +2,7 @@
 // Reservation Domain — Types & Constants
 // ============================================================
 
-import type { UUID, Timestamp, JsonObject } from '../../lib/types';
+import type { UUID, Timestamp, JsonObject } from '../../shared/types';
 
 export const RESERVATION_DOMAIN = 'reservation' as const;
 

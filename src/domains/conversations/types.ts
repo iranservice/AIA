@@ -9,7 +9,7 @@
 //           Routing owns WHO controls the conversation.
 // ============================================================
 
-import type { UUID, Timestamp, JsonObject } from '../../lib/types';
+import type { UUID, Timestamp, JsonObject } from '../../shared/types';
 import type { ChannelType } from '../authz/types';
 
 // ── Enums ───────────────────────────────────────────────────

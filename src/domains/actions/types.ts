@@ -2,7 +2,7 @@
 // Action Engine Domain — Types & Constants
 // ============================================================
 
-import type { UUID, Timestamp, JsonObject } from '../../lib/types';
+import type { UUID, Timestamp, JsonObject } from '../../shared/types';
 import type { MembershipRole } from '../authz/types';
 
 export const ACTIONS_DOMAIN = 'actions' as const;

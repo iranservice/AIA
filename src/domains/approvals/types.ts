@@ -10,7 +10,7 @@
 //           without going through a domain service.
 // ============================================================
 
-import type { UUID, Timestamp, JsonObject } from '../../lib/types';
+import type { UUID, Timestamp, JsonObject } from '../../shared/types';
 import type { MembershipRole } from '../authz/types';
 
 export const APPROVALS_DOMAIN = 'approvals' as const;

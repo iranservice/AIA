@@ -2,10 +2,10 @@
 // AI Runtime Domain — Types & Constants
 // ============================================================
 
-import type { UUID, Timestamp, JsonObject } from '../../lib/types';
+import type { UUID, Timestamp, JsonObject } from '../../shared/types';
 import type { ActionType } from '../actions/types';
 
-export const AI_RUNTIME_DOMAIN = 'ai-runtime' as const;
+export const AI_RUNTIME_DOMAIN = 'ai_runtime' as const;
 
 export interface AiAgentConfig {
   id: UUID;

@@ -2,7 +2,7 @@
 // Identity Domain — Types
 // ============================================================
 
-import type { UUID, Timestamp } from '../../lib/types';
+import type { UUID, Timestamp } from '../../shared/types';
 import type { PlatformRole } from '../authz/types';
 
 /** User profile extending Supabase auth.users */

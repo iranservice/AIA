@@ -2,7 +2,7 @@
 // RBAC Domain — Types
 // ============================================================
 
-import type { UUID, Timestamp } from '../../lib/types';
+import type { UUID, Timestamp } from '../../shared/types';
 import type { BusinessType } from '../tenancy/types';
 
 // ── Enums ───────────────────────────────────────────────────

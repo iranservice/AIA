@@ -2,7 +2,7 @@
 // Audit Domain — Types & Constants
 // ============================================================
 
-import type { UUID, Timestamp, JsonObject } from '../../lib/types';
+import type { UUID, Timestamp, JsonObject } from '../../shared/types';
 
 export const AUDIT_DOMAIN = 'audit' as const;
 

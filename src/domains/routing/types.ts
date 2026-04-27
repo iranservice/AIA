@@ -9,7 +9,7 @@
 //           These two responsibilities must not be mixed.
 // ============================================================
 
-import type { UUID, Timestamp, JsonObject } from '../../lib/types';
+import type { UUID, Timestamp, JsonObject } from '../../shared/types';
 
 export const ROUTING_DOMAIN = 'routing' as const;
 

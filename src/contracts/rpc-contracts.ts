@@ -3,7 +3,7 @@
 // Type-safe contract definitions for all Supabase RPCs.
 // ============================================================
 
-import type { UUID } from '../lib/types';
+import type { UUID } from '../shared/types';
 import type { ChannelType, MembershipRole } from '../domains/authz/types';
 import type { MessageDirection, MessageSenderType, MessageContentType } from '../domains/conversations/types';
 import type { OrderStatus, OrderType } from '../domains/orders/types';
@@ -12,7 +12,7 @@ import type { TicketPriority } from '../domains/cases/types';
 import type { ActionType, ActionTriggerSource } from '../domains/actions/types';
 import type { AuditSeverity } from '../domains/audit/types';
 import type { UsageMeterType } from '../domains/billing/types';
-import type { JsonObject } from '../lib/types';
+import type { JsonObject } from '../shared/types';
 
 // ── Identity RPCs ───────────────────────────────────────────
 

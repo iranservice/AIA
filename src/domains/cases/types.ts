@@ -2,7 +2,7 @@
 // Tickets Domain — Types & Constants
 // ============================================================
 
-import type { UUID, Timestamp } from '../../lib/types';
+import type { UUID, Timestamp } from '../../shared/types';
 
 export const TICKETS_DOMAIN = 'tickets' as const;
 

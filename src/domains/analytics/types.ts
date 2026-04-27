@@ -10,7 +10,7 @@
 //           business logic.
 // ============================================================
 
-import type { UUID, Timestamp } from '../../lib/types';
+import type { UUID, Timestamp } from '../../shared/types';
 
 export const ANALYTICS_DOMAIN = 'analytics' as const;
 

@@ -2,7 +2,7 @@
 // Order Domain — Types
 // ============================================================
 
-import type { UUID, Timestamp, JsonObject } from '../../lib/types';
+import type { UUID, Timestamp, JsonObject } from '../../shared/types';
 
 // ── Enums ───────────────────────────────────────────────────
 

@@ -19,7 +19,7 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@domains/*": ["./src/domains/*"],
-      "@lib/*": ["./src/lib/*"],
+      "@shared/*": ["./src/shared/*"],
       "@contracts/*": ["./src/contracts/*"]
     }
   },

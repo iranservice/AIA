@@ -2,7 +2,7 @@
 // Customer Domain — Types
 // ============================================================
 
-import type { UUID, Timestamp, JsonObject } from '../../lib/types';
+import type { UUID, Timestamp, JsonObject } from '../../shared/types';
 import type { ChannelType } from '../authz/types';
 
 /** End-customer of a tenant business */
