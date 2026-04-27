@@ -1,0 +1,29 @@
+{
+  "name": "aia-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Multi-tenant B2B AI receptionist platform — backend core",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate:sql": "node scripts/validate-sql.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.99.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.16.5",
+    "eslint": "^9.32.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
