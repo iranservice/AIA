@@ -63,6 +63,14 @@ export const AUDIT_ACTIONS = {
   AI_INTERACTION: 'ai.interaction',
   AI_ACTION_TRIGGERED: 'ai.action_triggered',
 
+  // Business Settings
+  BUSINESS_PROFILE_UPDATED: 'business.profile_updated',
+
+  // Member Management
+  MEMBER_ROLE_UPDATED: 'member.role_updated',
+  MEMBER_DEACTIVATED: 'member.deactivated',
+  MEMBER_INVITED: 'member.invited',
+
   // Auth / Security
   AUTH_LOGIN: 'auth.login',
   AUTH_LOGOUT: 'auth.logout',
