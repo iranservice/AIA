@@ -57,16 +57,26 @@ create index idx_reservations_date on reservations(business_id, reserved_at);
 create index idx_reservations_upcoming on reservations(business_id, reserved_at)
   where status in ('pending', 'confirmed');
 
--- Double-booking prevention using GiST exclusion constraint.
+-- Helper function for computing reservation time range (must be IMMUTABLE for index use)
+create or replace function reservation_time_range(
+  p_reserved_at timestamptz,
+  p_duration_minutes int
+)
+returns tstzrange
+language sql immutable
+as $$
+  select tstzrange(p_reserved_at, p_reserved_at + make_interval(mins => p_duration_minutes));
+$$;
+
+-- Double-booking prevention using GiST index.
 -- Prevents overlapping reservations for the same business within
--- the same time window. This uses tstzrange computed from
--- reserved_at and duration_minutes.
--- NOTE: This is a simple per-business exclusion. For per-table or
--- per-resource exclusion, extend with resource_id in the constraint.
+-- the same time window.
+-- NOTE: This is a simple per-business overlap detection. For per-table or
+-- per-resource exclusion, extend with resource_id in the query.
 create index idx_reservations_time_gist on reservations
   using gist (
     business_id,
-    tstzrange(reserved_at, reserved_at + (duration_minutes || ' minutes')::interval)
+    reservation_time_range(reserved_at, duration_minutes)
   )
   where status not in ('cancelled', 'no_show', 'completed');
 
@@ -143,8 +153,8 @@ begin
   from reservations r
   where r.business_id = p_business_id
     and r.status not in ('cancelled', 'no_show', 'completed')
-    and tstzrange(r.reserved_at, r.reserved_at + (r.duration_minutes || ' minutes')::interval)
-       && tstzrange(p_reserved_at, p_reserved_at + (p_duration_minutes || ' minutes')::interval);
+    and reservation_time_range(r.reserved_at, r.duration_minutes)
+       && reservation_time_range(p_reserved_at, p_duration_minutes);
 
   -- Warn if there are conflicts (business may have capacity for multiple)
   -- For strict single-resource booking, uncomment the raise below:

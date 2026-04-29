@@ -4,10 +4,10 @@
 -- ============================================================
 
 -- UUID generation
-create extension if not exists "uuid-ossp" schema extensions;
+create extension if not exists "uuid-ossp" schema public;
 
 -- Cryptographic functions (for hashing, token generation)
-create extension if not exists "pgcrypto" schema extensions;
+create extension if not exists "pgcrypto" schema public;
 
 -- Trigram similarity for fuzzy text search (customer name search, etc.)
 create extension if not exists "pg_trgm" schema public;
