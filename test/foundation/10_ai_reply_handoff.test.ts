@@ -402,4 +402,114 @@ describe('10 — AI Reply + Handoff Control', () => {
       expect(updated.rows[0].processed_at).toBeDefined();
     });
   });
+
+  // ─────────────────────────────────────────────────────────
+  // RELEASE TO AI WITH REPLY (Phase VIII-A)
+  // ─────────────────────────────────────────────────────────
+
+  it('release_to_ai_with_reply produces AI message in timeline', async () => {
+    await withRollback(async (client) => {
+      const { owner, bizId, conversationId } = await setupAiConversation(client, 'Hello, I need help');
+      const operator = await createTestUser(client, `op_rwr_${Date.now()}@test.com`);
+      await createMembership(client, bizId, operator, 'operator');
+
+      // Assign to operator first
+      await asUser(client, owner);
+      await client.query(
+        `SELECT assign_conversation($1, $2)`, [conversationId, operator]
+      );
+
+      // Release to AI with reply
+      const result = await client.query(
+        `SELECT release_to_ai_with_reply($1) as result`, [conversationId]
+      );
+      const rwr = result.rows[0].result;
+
+      // Verify combined result structure
+      expect(rwr.error).toBeUndefined();
+      expect(rwr.ai_enabled).toBe(true);
+      expect(rwr.status).toBe('open');
+      expect(rwr.event_type).toBe('released_to_ai');
+      expect(rwr.ai_reply).toBeDefined();
+      expect(rwr.ai_reply.message_id).toBeDefined();
+      expect(rwr.ai_reply.decision).toBe('replied');
+      expect(rwr.ai_reply.provider).toBe('mock-sql');
+
+      // Verify conversation state
+      await asServiceRole(client);
+      const convo = await client.query(
+        `SELECT status, assigned_to, ai_enabled FROM conversations WHERE id = $1`,
+        [conversationId]
+      );
+      expect(convo.rows[0].status).toBe('open');
+      expect(convo.rows[0].assigned_to).toBeNull();
+      expect(convo.rows[0].ai_enabled).toBe(true);
+
+      // Verify AI message exists in timeline
+      const msg = await client.query(
+        `SELECT direction, sender_type, delivery_status, content
+         FROM messages WHERE id = $1`,
+        [rwr.ai_reply.message_id]
+      );
+      expect(msg.rows[0].direction).toBe('outbound');
+      expect(msg.rows[0].sender_type).toBe('ai');
+      expect(msg.rows[0].delivery_status).toBe('queued');
+      expect(msg.rows[0].content).toContain('[AI Assistant]');
+
+      // Verify handoff event exists
+      const events = await client.query(
+        `SELECT event_type, to_owner_type FROM handoff_events
+         WHERE conversation_id = $1 AND event_type = 'released_to_ai'`,
+        [conversationId]
+      );
+      expect(events.rows.length).toBe(1);
+      expect(events.rows[0].to_owner_type).toBe('ai');
+
+      // Verify AI interaction log exists with mock-sql provider
+      const logs = await client.query(
+        `SELECT decision, provider_name, model_used
+         FROM ai_interaction_logs WHERE conversation_id = $1
+         ORDER BY created_at DESC LIMIT 1`,
+        [conversationId]
+      );
+      expect(logs.rows[0].decision).toBe('replied');
+      expect(logs.rows[0].provider_name).toBe('mock-sql');
+      expect(logs.rows[0].model_used).toBe('mock-sql-v1');
+    });
+  });
+
+  it('release_to_ai_with_reply denied for viewer (lacks permission)', async () => {
+    await withRollback(async (client) => {
+      const { bizId, conversationId } = await setupAiConversation(client, 'Hi');
+      const viewer = await createTestUser(client, `viewer_rwr_${Date.now()}@test.com`);
+      await createMembership(client, bizId, viewer, 'viewer');
+
+      // Viewer cannot release to AI (lacks conversation:assign)
+      await asUser(client, viewer);
+      const result = await client.query(
+        `SELECT release_to_ai_with_reply($1) as result`, [conversationId]
+      );
+
+      expect(result.rows[0].result.error).toBe('PERMISSION_DENIED');
+    });
+  });
+
+  it('release_to_ai_with_reply on closed conversation returns error', async () => {
+    await withRollback(async (client) => {
+      const { owner, conversationId } = await setupAiConversation(client, 'Hello');
+
+      // Close the conversation
+      await client.query(
+        `UPDATE conversations SET status = 'closed', closed_at = now() WHERE id = $1`,
+        [conversationId]
+      );
+
+      await asUser(client, owner);
+      const result = await client.query(
+        `SELECT release_to_ai_with_reply($1) as result`, [conversationId]
+      );
+
+      expect(result.rows[0].result.error).toBe('CONVERSATION_CLOSED');
+    });
+  });
 });
