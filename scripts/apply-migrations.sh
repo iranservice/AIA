@@ -15,6 +15,7 @@ PGPASSWORD="${PGPASSWORD:-aia_pass}"
 export PGPASSWORD
 
 MIGRATIONS_DIR="supabase/migrations"
+BOOTSTRAP_DIR="test/bootstrap"
 PASS_COUNT=0
 FAIL_COUNT=0
 FAILED_FILES=()
@@ -34,7 +35,33 @@ fi
 echo "✅ Database connection verified"
 echo ""
 
-# Apply each migration in order, wrapped in a transaction
+# Phase 1: Apply test bootstrap SQL (auth mock, roles, default privileges)
+# These files simulate Supabase-native schema for standalone PostgreSQL testing.
+# They live outside supabase/migrations/ so `supabase db reset` never replays them.
+if [ -d "$BOOTSTRAP_DIR" ]; then
+  echo "── Bootstrap (test-only) ──────────────────"
+  for bootstrap in $(ls "$BOOTSTRAP_DIR"/*.sql 2>/dev/null | sort); do
+    filename=$(basename "$bootstrap")
+    echo -n "  Applying $filename ... "
+
+    if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+      -v ON_ERROR_STOP=1 --single-transaction -f "$bootstrap" > /dev/null 2>&1; then
+      echo "✅"
+      ((PASS_COUNT++))
+    else
+      echo "❌ FAILED"
+      ((FAIL_COUNT++))
+      FAILED_FILES+=("$filename")
+      psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+        -v ON_ERROR_STOP=1 --single-transaction -f "$bootstrap" 2>&1 | grep -i 'error:' | head -3
+      echo ""
+    fi
+  done
+  echo ""
+fi
+
+# Phase 2: Apply product migrations (shared with Supabase local)
+echo "── Product Migrations ─────────────────────"
 for migration in $(ls "$MIGRATIONS_DIR"/*.sql | sort); do
   filename=$(basename "$migration")
   echo -n "  Applying $filename ... "

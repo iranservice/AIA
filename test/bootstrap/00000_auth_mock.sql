@@ -1,9 +1,17 @@
 -- ============================================================
--- 00000 — Auth Mock for Local Testing
+-- 00000 — Auth Mock for Standalone Test DB
 --
 -- Simulates Supabase auth schema for local PostgreSQL testing.
 -- In production Supabase, this schema is provided natively.
--- This file is ONLY applied to local test databases.
+--
+-- IMPORTANT: This file lives in test/bootstrap/, NOT supabase/migrations/.
+-- It must NEVER be placed in supabase/migrations/ because:
+--   - `supabase db reset` replays all files in supabase/migrations/
+--   - Supabase local already has native auth.uid(), auth.jwt(), auth.role()
+--   - Replaying this file would overwrite those native functions with mocks
+--
+-- This file is applied by scripts/apply-migrations.sh BEFORE product
+-- migrations, only when targeting the standalone test DB (aia_test).
 -- ============================================================
 
 -- Create auth schema (Supabase provides this natively)
