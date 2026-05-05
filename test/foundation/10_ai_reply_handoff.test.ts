@@ -512,4 +512,266 @@ describe('10 — AI Reply + Handoff Control', () => {
       expect(result.rows[0].result.error).toBe('CONVERSATION_CLOSED');
     });
   });
+
+  // ─────────────────────────────────────────────────────────
+  // BUSINESS AI SETTINGS CONTRACT (Phase VIII-B)
+  // ─────────────────────────────────────────────────────────
+
+  it('get_business_ai_settings returns defaults when no policy exists', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_owner_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI Settings Biz ${Date.now()}`, owner);
+
+      await asUser(client, owner);
+      const result = await client.query(
+        `SELECT get_business_ai_settings($1) as result`, [bizId]
+      );
+      const settings = result.rows[0].result;
+
+      expect(settings.error).toBeUndefined();
+      expect(settings.business_id).toBe(bizId);
+      expect(settings.ai_enabled).toBe(false);
+      expect(settings.provider_mode).toBe('mock_sql');
+      expect(settings.auto_reply_enabled).toBe(false);
+      expect(settings.require_human_approval).toBe(true);
+      expect(settings.max_context_messages).toBe(20);
+      expect(settings.policy_rule_id).toBeNull();
+    });
+  });
+
+  it('owner can enable AI settings via update RPC', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_enable_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI Enable Biz ${Date.now()}`, owner);
+
+      await asUser(client, owner);
+      const result = await client.query(
+        `SELECT update_business_ai_settings($1, $2) as result`,
+        [bizId, JSON.stringify({ ai_enabled: true })]
+      );
+      const settings = result.rows[0].result;
+
+      expect(settings.error).toBeUndefined();
+      expect(settings.ai_enabled).toBe(true);
+      expect(settings.provider_mode).toBe('mock_sql');
+      expect(settings.policy_rule_id).toBeDefined();
+      expect(settings.policy_rule_id).not.toBeNull();
+    });
+  });
+
+  it('enabling AI creates policy_rules row with rule_type=ai_allowed', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_pr_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI PR Biz ${Date.now()}`, owner);
+
+      await asUser(client, owner);
+      await client.query(
+        `SELECT update_business_ai_settings($1, $2)`,
+        [bizId, JSON.stringify({ ai_enabled: true })]
+      );
+
+      // Verify the policy_rules row
+      await asServiceRole(client);
+      const pr = await client.query(
+        `SELECT rule_type, rule_config, is_active FROM policy_rules
+         WHERE business_id = $1 AND rule_type = 'ai_allowed'`,
+        [bizId]
+      );
+      expect(pr.rows.length).toBe(1);
+      expect(pr.rows[0].is_active).toBe(true);
+      expect(pr.rows[0].rule_config.enabled).toBe(true);
+    });
+  });
+
+  it('release_to_ai_with_reply works after enabling AI via settings RPC', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_rwr_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI RWR Biz ${Date.now()}`, owner);
+      const chanId = await createChannel(client, bizId);
+
+      // Enable AI through the new contract (no manual SQL!)
+      await asUser(client, owner);
+      await client.query(
+        `SELECT update_business_ai_settings($1, $2)`,
+        [bizId, JSON.stringify({ ai_enabled: true })]
+      );
+
+      // Ingest a message to create a conversation
+      await asServiceRole(client);
+      const msg = await ingestMessage(client, bizId, chanId, '+989999990001', 'Help me');
+
+      // Enable AI on conversation + assign
+      await client.query(
+        `UPDATE conversations SET ai_enabled = true WHERE id = $1`,
+        [msg.conversation_id]
+      );
+      await asUser(client, owner);
+      const operator = await createTestUser(client, `ais_op_${Date.now()}@test.com`);
+      await createMembership(client, bizId, operator, 'operator');
+      await client.query(
+        `SELECT assign_conversation($1, $2)`, [msg.conversation_id, operator]
+      );
+
+      // Release to AI with reply — should succeed without manual policy insert
+      const result = await client.query(
+        `SELECT release_to_ai_with_reply($1) as result`, [msg.conversation_id]
+      );
+      const rwr = result.rows[0].result;
+
+      expect(rwr.error).toBeUndefined();
+      expect(rwr.ai_enabled).toBe(true);
+      expect(rwr.ai_reply).toBeDefined();
+      expect(rwr.ai_reply.provider).toBe('mock-sql');
+    });
+  });
+
+  it('disabling AI via settings RPC makes release_to_ai_with_reply fail', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_dis_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI Dis Biz ${Date.now()}`, owner);
+      const chanId = await createChannel(client, bizId);
+
+      // Enable then disable AI
+      await asUser(client, owner);
+      await client.query(
+        `SELECT update_business_ai_settings($1, $2)`,
+        [bizId, JSON.stringify({ ai_enabled: true })]
+      );
+      await client.query(
+        `SELECT update_business_ai_settings($1, $2)`,
+        [bizId, JSON.stringify({ ai_enabled: false })]
+      );
+
+      // Ingest and assign
+      await asServiceRole(client);
+      const msg = await ingestMessage(client, bizId, chanId, '+989999990002', 'Test');
+      await client.query(
+        `UPDATE conversations SET ai_enabled = true WHERE id = $1`,
+        [msg.conversation_id]
+      );
+      await asUser(client, owner);
+      const op = await createTestUser(client, `ais_dop_${Date.now()}@test.com`);
+      await createMembership(client, bizId, op, 'operator');
+      await client.query(
+        `SELECT assign_conversation($1, $2)`, [msg.conversation_id, op]
+      );
+
+      // Release to AI should fail
+      const result = await client.query(
+        `SELECT release_to_ai_with_reply($1) as result`, [msg.conversation_id]
+      );
+      expect(result.rows[0].result.error).toBe('AI_NOT_ALLOWED');
+    });
+  });
+
+  it('viewer cannot update AI settings', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_vowne_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI Viewer Biz ${Date.now()}`, owner);
+      const viewer = await createTestUser(client, `ais_viewer_${Date.now()}@test.com`);
+      await createMembership(client, bizId, viewer, 'viewer');
+
+      await asUser(client, viewer);
+      const result = await client.query(
+        `SELECT update_business_ai_settings($1, $2) as result`,
+        [bizId, JSON.stringify({ ai_enabled: true })]
+      );
+      expect(result.rows[0].result.error).toBe('PERMISSION_DENIED');
+    });
+  });
+
+  it('non-member cannot read AI settings', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_nmown_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI NM Biz ${Date.now()}`, owner);
+      const outsider = await createTestUser(client, `ais_outsider_${Date.now()}@test.com`);
+
+      await asUser(client, outsider);
+      const result = await client.query(
+        `SELECT get_business_ai_settings($1) as result`, [bizId]
+      );
+      // Non-member gets NULL (empty/denied)
+      expect(result.rows[0].result).toBeNull();
+    });
+  });
+
+  it('unknown config keys are rejected', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_unk_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI Unk Biz ${Date.now()}`, owner);
+
+      await asUser(client, owner);
+      const result = await client.query(
+        `SELECT update_business_ai_settings($1, $2) as result`,
+        [bizId, JSON.stringify({ ai_enabled: true, unknown_field: 'bad' })]
+      );
+      expect(result.rows[0].result.error).toBe('INVALID_SETTING');
+    });
+  });
+
+  it('API key fields are actively rejected', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_sec_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI Sec Biz ${Date.now()}`, owner);
+
+      await asUser(client, owner);
+      const result = await client.query(
+        `SELECT update_business_ai_settings($1, $2) as result`,
+        [bizId, JSON.stringify({ ai_enabled: true, api_key: 'sk-fake123' })]
+      );
+      expect(result.rows[0].result.error).toBe('FORBIDDEN_SETTING');
+    });
+  });
+
+  it('max_context_messages out of bounds is rejected', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_bounds_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI Bounds Biz ${Date.now()}`, owner);
+
+      await asUser(client, owner);
+      // Too high
+      const r1 = await client.query(
+        `SELECT update_business_ai_settings($1, $2) as result`,
+        [bizId, JSON.stringify({ ai_enabled: true, max_context_messages: 100 })]
+      );
+      expect(r1.rows[0].result.error).toBe('VALIDATION_ERROR');
+
+      // Too low
+      const r2 = await client.query(
+        `SELECT update_business_ai_settings($1, $2) as result`,
+        [bizId, JSON.stringify({ ai_enabled: true, max_context_messages: 0 })]
+      );
+      expect(r2.rows[0].result.error).toBe('VALIDATION_ERROR');
+    });
+  });
+
+  it('operator can read but not update AI settings', async () => {
+    await withRollback(async (client) => {
+      const owner = await createTestUser(client, `ais_opown_${Date.now()}@test.com`);
+      const bizId = await createTestBusiness(client, `AI Op Biz ${Date.now()}`, owner);
+      const operator = await createTestUser(client, `ais_op2_${Date.now()}@test.com`);
+      await createMembership(client, bizId, operator, 'operator');
+
+      // Enable AI as owner first
+      await asUser(client, owner);
+      await client.query(
+        `SELECT update_business_ai_settings($1, $2)`,
+        [bizId, JSON.stringify({ ai_enabled: true })]
+      );
+
+      // Operator can read
+      await asUser(client, operator);
+      const readResult = await client.query(
+        `SELECT get_business_ai_settings($1) as result`, [bizId]
+      );
+      expect(readResult.rows[0].result.ai_enabled).toBe(true);
+
+      // Operator cannot update
+      const writeResult = await client.query(
+        `SELECT update_business_ai_settings($1, $2) as result`,
+        [bizId, JSON.stringify({ ai_enabled: false })]
+      );
+      expect(writeResult.rows[0].result.error).toBe('PERMISSION_DENIED');
+    });
+  });
 });
