@@ -1,7 +1,7 @@
 # AIA — Platform Foundation Roadmap
 
-> **Last updated**: 2026-05-05
-> **Status**: Draft — pending audit before commit.
+> **Last updated**: 2026-05-06
+> **Status**: Finalized — committed in d3ecf91; approved for issue/backlog creation.
 > **References**: [Product Definition](../product/product-definition.md) · [MVP Scope](../product/mvp-scope.md) · [Feature Roadmap](../product/feature-roadmap.md)
 
 ---
