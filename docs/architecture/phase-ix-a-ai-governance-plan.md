@@ -1,6 +1,6 @@
 # Phase IX-A Implementation Plan — AI Token/Cost Governance + Capability Router
 
-> **Status**: Draft — pending audit before implementation.
+> **Status**: Approved — committed in d3df971; ready for Phase IX-A implementation prompt.
 > **Author**: CTO / Backend Architect
 > **Date**: 2026-05-06
 > **Base commit**: `c685ad0`
