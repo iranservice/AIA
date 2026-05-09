@@ -4,7 +4,7 @@ import { getServiceClient, closePool } from './setup';
 describe('01 — Schema Validation', () => {
   afterAll(async () => { await closePool(); });
 
-  it('should have all 28 expected tables', async () => {
+  it('should have all 33 expected tables', async () => {
     const client = await getServiceClient();
     try {
       const res = await client.query(
@@ -16,7 +16,8 @@ describe('01 — Schema Validation', () => {
 
       const expected = [
         'action_definitions', 'action_executions',
-        'ai_agent_configs', 'ai_interaction_logs',
+        'ai_agent_configs', 'ai_capability_registry', 'ai_interaction_logs',
+        'ai_model_bindings', 'ai_model_catalog', 'ai_usage_ledger',
         'audit_log',
         'billing_events', 'business_channels', 'business_memberships',
         'business_operating_hours', 'businesses',
@@ -35,7 +36,7 @@ describe('01 — Schema Validation', () => {
       for (const t of expected) {
         expect(tables, `Missing table: ${t}`).toContain(t);
       }
-      expect(tables.length).toBe(29);
+      expect(tables.length).toBe(33);
     } finally {
       client.release();
     }
@@ -133,6 +134,10 @@ describe('01 — Schema Validation', () => {
         'request_customer_confirmation',
         'get_order_available_actions',
         'build_confirmation_text',
+        'resolve_ai_capability_binding',
+        'check_ai_budget',
+        'record_ai_usage',
+        'get_business_ai_usage_summary',
       ];
       for (const f of expected) {
         expect(fns, `Missing function: ${f}`).toContain(f);
