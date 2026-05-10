@@ -138,6 +138,7 @@ describe('01 — Schema Validation', () => {
         'check_ai_budget',
         'record_ai_usage',
         'get_business_ai_usage_summary',
+        'classify_ai_fallback',
       ];
       for (const f of expected) {
         expect(fns, `Missing function: ${f}`).toContain(f);
