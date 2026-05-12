@@ -4,7 +4,7 @@ import { getServiceClient, closePool } from './setup';
 describe('01 — Schema Validation', () => {
   afterAll(async () => { await closePool(); });
 
-  it('should have all 33 expected tables', async () => {
+  it('should have all 35 expected tables', async () => {
     const client = await getServiceClient();
     try {
       const res = await client.query(
@@ -21,6 +21,7 @@ describe('01 — Schema Validation', () => {
         'audit_log',
         'billing_events', 'business_channels', 'business_memberships',
         'business_operating_hours', 'businesses',
+        'conversation_turn_messages', 'conversation_turns',
         'conversations', 'customer_identities', 'customers',
         'handoff_events',
         'integration_logs',
@@ -36,7 +37,7 @@ describe('01 — Schema Validation', () => {
       for (const t of expected) {
         expect(tables, `Missing table: ${t}`).toContain(t);
       }
-      expect(tables.length).toBe(33);
+      expect(tables.length).toBe(35);
     } finally {
       client.release();
     }
@@ -70,7 +71,8 @@ describe('01 — Schema Validation', () => {
       const mustHaveRls = [
         'businesses', 'business_memberships', 'business_channels',
         'customers', 'customer_identities',
-        'conversations', 'messages',
+        'conversations', 'conversation_turns', 'conversation_turn_messages',
+        'messages',
         'orders', 'reservations', 'tickets',
         'audit_log',
       ];
@@ -139,6 +141,13 @@ describe('01 — Schema Validation', () => {
         'record_ai_usage',
         'get_business_ai_usage_summary',
         'classify_ai_fallback',
+        'get_or_create_pending_turn',
+        'append_message_to_turn',
+        'finalize_conversation_turn',
+        'finalize_due_turns',
+        'get_finalized_turn_for_ai',
+        'mark_turn_processed',
+        'skip_pending_turns_for_conversation',
       ];
       for (const f of expected) {
         expect(fns, `Missing function: ${f}`).toContain(f);
